@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>应收账龄系统</h1>
+<p>当前账簿（截至 {{ today }}）：</p>
+<table>
+  <tr><th>发票</th><th>收款</th><th>核销</th><th>撤销核销</th><th>银行冲正</th></tr>
+  <tr>
+    <td>{{ stats.invoices }}</td>
+    <td>{{ stats.receipts }}</td>
+    <td>{{ stats.allocations }}</td>
+    <td>{{ stats.unallocations }}</td>
+    <td>{{ stats.reversals }}</td>
+  </tr>
+</table>
+<ul>
+  <li><a href="{{ url_for('upload_invoices') }}">上传发票 CSV</a>（单号、开票日、到期日、金额）</li>
+  <li><a href="{{ url_for('upload_transactions') }}">分批上传流水 CSV</a>（收款 / 核销 / 撤销核销 / 银行冲正）</li>
+  <li><a href="{{ url_for('aging') }}">按截止日查询账龄</a></li>
+</ul>
+{% endblock %}

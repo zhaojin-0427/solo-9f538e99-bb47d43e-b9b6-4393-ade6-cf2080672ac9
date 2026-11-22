@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}发票{% endblock %}
+{% block content %}
+<h1>发票（当前状态）</h1>
+{% if invoices %}
+<table>
+  <tr><th>单号</th><th>开票日</th><th>到期日</th><th>金额</th><th>已核销</th><th>未核销余额</th></tr>
+  {% for inv in invoices %}
+  <tr>
+    <td>{{ inv.id }}</td>
+    <td>{{ inv.invoice_date }}</td>
+    <td>{{ inv.due_date }}</td>
+    <td class="num">{{ "%.2f"|format(inv.amount_cents / 100) }}</td>
+    <td class="num">{{ "%.2f"|format(inv.allocated / 100) }}</td>
+    <td class="num">{{ "%.2f"|format(inv.outstanding_cents / 100) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>暂无发票，请先<a href="{{ url_for('upload_invoices') }}">上传发票 CSV</a>。</p>
+{% endif %}
+{% endblock %}

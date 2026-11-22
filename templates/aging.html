@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}账龄查询{% endblock %}
+{% block content %}
+<h1>应收账龄</h1>
+<form method="get" class="inline-form">
+  <label>截止日（UTC，含当天结束）：
+    <input type="date" name="cutoff" value="{{ report.cutoff }}">
+  </label>
+  <button type="submit">查询</button>
+</form>
+
+<h2>账龄汇总</h2>
+<table>
+  <tr>
+    {% for b in buckets %}<th>{{ b }}</th>{% endfor %}
+    <th>合计</th>
+  </tr>
+  <tr>
+    {% for b in buckets %}<td class="num">{{ "%.2f"|format(report.bucket_totals[b] / 100) }}</td>{% endfor %}
+    <td class="num"><strong>{{ "%.2f"|format(report.total_cents / 100) }}</strong></td>
+  </tr>
+</table>
+
+<h2>未结发票（{{ report.rows|length }} 张，截至 {{ report.cutoff }} 结束）</h2>
+{% if report.rows %}
+<table>
+  <tr>
+    <th>单号</th><th>开票日</th><th>到期日</th>
+    <th>发票金额</th><th>未核销余额</th><th>逾期天数</th><th>账龄段</th>
+  </tr>
+  {% for it in report.rows %}
+  <tr>
+    <td>{{ it.invoice_id }}</td>
+    <td>{{ it.invoice_date }}</td>
+    <td>{{ it.due_date }}</td>
+    <td class="num">{{ "%.2f"|format(it.amount_cents / 100) }}</td>
+    <td class="num">{{ "%.2f"|format(it.outstanding_cents / 100) }}</td>
+    <td class="num">{{ it.overdue_days }}</td>
+    <td>{{ it.bucket }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>该截止日无未结发票。</p>
+{% endif %}
+{% endblock %}

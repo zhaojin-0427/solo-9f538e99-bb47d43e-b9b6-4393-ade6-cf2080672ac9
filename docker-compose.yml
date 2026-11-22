@@ -1,0 +1,14 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      LEDGER_DB: /data/ledger.db
+      # SECRET_KEY: 请在生产环境覆盖
+    volumes:
+      - ledger-data:/data
+    restart: unless-stopped
+
+volumes:
+  ledger-data:

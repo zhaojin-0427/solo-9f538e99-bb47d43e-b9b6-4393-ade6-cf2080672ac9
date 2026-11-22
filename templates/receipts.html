@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}收款{% endblock %}
+{% block content %}
+<h1>收款（当前状态）</h1>
+{% if receipts %}
+<table>
+  <tr><th>编号</th><th>生效时刻 (UTC)</th><th>金额</th><th>有效核销</th><th>已冲正</th><th>可用额</th></tr>
+  {% for r in receipts %}
+  <tr>
+    <td>{{ r.id }}</td>
+    <td>{{ r.effective_at }}</td>
+    <td class="num">{{ "%.2f"|format(r.amount_cents / 100) }}</td>
+    <td class="num">{{ "%.2f"|format(r.allocated_cents / 100) }}</td>
+    <td class="num">{{ "%.2f"|format(r.reversed_cents / 100) }}</td>
+    <td class="num">{{ "%.2f"|format(r.available_cents / 100) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>暂无收款流水。</p>
+{% endif %}
+{% endblock %}

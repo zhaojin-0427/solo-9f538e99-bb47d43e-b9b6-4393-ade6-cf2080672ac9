@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}应收账龄{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<nav>
+  <span class="brand">应收账龄</span>
+  <a href="{{ url_for('index') }}">首页</a>
+  <a href="{{ url_for('aging') }}">账龄查询</a>
+  <a href="{{ url_for('invoices') }}">发票</a>
+  <a href="{{ url_for('receipts') }}">收款</a>
+  <a href="{{ url_for('transactions') }}">流水</a>
+  <a href="{{ url_for('upload_invoices') }}">上传发票</a>
+  <a href="{{ url_for('upload_transactions') }}">上传流水</a>
+</nav>
+<main>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

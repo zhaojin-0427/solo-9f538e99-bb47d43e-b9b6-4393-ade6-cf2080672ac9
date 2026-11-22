@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}上传流水{% endblock %}
+{% block content %}
+<h1>分批上传流水 CSV</h1>
+<form method="post" enctype="multipart/form-data" class="inline-form">
+  <input type="file" name="file" accept=".csv" required>
+  <button type="submit">上传并入账</button>
+</form>
+<p>CSV 需含表头（UTF-8 编码）：</p>
+<pre>txn_id,txn_type,effective_at,amount_cents,receipt_id,invoice_id,allocation_id
+R-001,receipt,2026-01-10T09:00:00Z,80000,,,
+A-001,allocation,2026-01-11T10:00:00Z,60000,R-001,INV-001,
+U-001,unallocation,2026-01-12T10:00:00Z,20000,,,A-001
+V-001,reversal,2026-01-13T10:00:00Z,10000,R-001,,</pre>
+<ul>
+  <li>类型也可用中文：收款 / 核销 / 撤销核销 / 冲正；金额为正整数分。</li>
+  <li>流水按（UTC 生效时刻， 编号）排序入账；编号全局唯一。</li>
+  <li>核销须引用已生效的收款与已存在的发票；撤销引用原核销；冲正引用原收款。</li>
+  <li>补登迟到流水时会连带校验后续旧流水：发票未核销额、收款可用额、
+      原核销可撤额任何一笔为负，即报首笔违规记录并<strong>整批拒收</strong>，原账不受影响。</li>
+</ul>
+{% endblock %}

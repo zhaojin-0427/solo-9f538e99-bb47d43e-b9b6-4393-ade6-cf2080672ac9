@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}上传发票{% endblock %}
+{% block content %}
+<h1>上传发票 CSV</h1>
+<form method="post" enctype="multipart/form-data" class="inline-form">
+  <input type="file" name="file" accept=".csv" required>
+  <button type="submit">上传</button>
+</form>
+<p>CSV 需含表头（UTF-8 编码）：</p>
+<pre>invoice_id,invoice_date,due_date,amount_cents
+INV-001,2026-01-05,2026-02-04,100000</pre>
+<ul>
+  <li>表头也可用中文：单号、开票日、到期日、金额。</li>
+  <li>金额为正整数分；单号重复（文件内或已存在）将整批拒绝。</li>
+</ul>
+{% endblock %}
