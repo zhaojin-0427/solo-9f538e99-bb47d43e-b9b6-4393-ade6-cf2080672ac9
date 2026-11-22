@@ -33,7 +33,19 @@ def create_app(db_path: str | None = None) -> Flask:
         f = request.files.get("file")
         if not f or not f.filename:
             raise ledger.BatchError("请选择要上传的 CSV 文件")
-        return f.read().decode("utf-8-sig")
+        try:
+            return ledger._read_csv_text(f.read())
+        except ValueError as exc:
+            raise ledger.BatchError(str(exc))
+
+    def read_upload_field(field: str, label: str) -> str:
+        f = request.files.get(field)
+        if not f or not f.filename:
+            raise ledger.BatchError(f"请选择{label}")
+        try:
+            return ledger._read_csv_text(f.read())
+        except ValueError as exc:
+            raise ledger.BatchError(f"{label}：{exc}")
 
     @app.route("/")
     def index():
@@ -45,7 +57,9 @@ def create_app(db_path: str | None = None) -> Flask:
             "unallocations": conn.execute("SELECT COUNT(*) FROM unallocations").fetchone()[0],
             "reversals": conn.execute("SELECT COUNT(*) FROM reversals").fetchone()[0],
         }
-        return render_template("index.html", stats=stats, today=date.today())
+        return render_template("index.html", stats=stats, today=date.today(),
+                               opening_date=ledger.get_opening_date(conn),
+                               is_empty=ledger.is_empty_ledger(conn))
 
     @app.route("/invoices")
     def invoices():
@@ -72,6 +86,45 @@ def create_app(db_path: str | None = None) -> Flask:
         return render_template("receipts.html",
                                receipts=ledger.list_receipts(get_db()))
 
+    @app.route("/opening", methods=["GET", "POST"])
+    def opening():
+        """空账一次性期初导入：三份 CSV + 期初日一起入账，有错整批拒收。"""
+        conn = get_db()
+        if request.method == "POST":
+            if not ledger.is_empty_ledger(conn):
+                flash("期初导入仅适用于空账；当前账中已有发票或流水。", "error")
+                return redirect(url_for("opening"))
+            opening_day = (request.form.get("opening_date") or "").strip()
+            if not opening_day:
+                flash("请选择期初日。", "error")
+            else:
+                try:
+                    parsed = ledger.parse_opening_csvs(
+                        read_upload_field("invoices_file", "期初发票 CSV"),
+                        read_upload_field("receipts_file", "期初收款 CSV"),
+                        read_upload_field("allocations_file", "期初核销 CSV"))
+                    result = ledger.import_opening(conn, opening_day, parsed)
+                    flash(
+                        f"期初导入成功（期初日 {result['opening_date']} UTC 零点）："
+                        f"发票 {result['invoices']} 张、收款 {result['receipts']} 笔、"
+                        f"核销 {result['allocations']} 笔。", "ok")
+                    return redirect(url_for("index"))
+                except ledger.BatchError as exc:
+                    flash(f"期初导入失败，整批拒收：{exc.message}", "error")
+                except UnicodeDecodeError:
+                    flash("期初导入失败：文件编码应为 UTF-8。", "error")
+        return render_template("opening.html",
+                               opening_date=ledger.get_opening_date(conn),
+                               is_empty=ledger.is_empty_ledger(conn))
+
+    @app.route("/opening/allocations")
+    def opening_allocations():
+        return render_template(
+            "opening_allocations.html",
+            allocations=ledger.list_opening_allocations(get_db()),
+            invoices=ledger.list_invoices(get_db()),
+            opening_date=ledger.get_opening_date(get_db()))
+
     @app.route("/transactions")
     def transactions():
         return render_template("transactions.html",
@@ -89,7 +142,8 @@ def create_app(db_path: str | None = None) -> Flask:
                 flash(f"{exc.message}（原账未改动，可照常查询）", "error")
             except UnicodeDecodeError:
                 flash("入账失败：文件编码应为 UTF-8。", "error")
-        return render_template("upload_transactions.html")
+        return render_template("upload_transactions.html",
+                               opening_date=ledger.get_opening_date(get_db()))
 
     @app.route("/aging")
     def aging():
@@ -99,8 +153,17 @@ def create_app(db_path: str | None = None) -> Flask:
         except ValueError:
             flash("截止日格式应为 YYYY-MM-DD。", "error")
             cutoff = date.today()
-        report = ledger.aging_as_of(get_db(), cutoff)
+        try:
+            report = ledger.aging_as_of(get_db(), cutoff)
+        except ledger.BatchError as exc:
+            flash(exc.message, "error")
+            opening = ledger.get_opening_date(get_db())
+            if opening:
+                report = ledger.aging_as_of(get_db(), date.fromisoformat(opening))
+            else:
+                report = ledger.aging_as_of(get_db(), cutoff)
         return render_template("aging.html", report=report,
-                               buckets=ledger.BUCKETS)
+                               buckets=ledger.BUCKETS,
+                               opening_date=ledger.get_opening_date(get_db()))
 
     return app

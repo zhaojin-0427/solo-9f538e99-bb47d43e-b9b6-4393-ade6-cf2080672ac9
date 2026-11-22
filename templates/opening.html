@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}期初导入{% endblock %}
+{% block content %}
+<h1>期初导入（空账一次性）</h1>
+
+{% if not is_empty %}
+<div class="flash error">
+  期初导入仅适用于空账。当前账中已存在发票或流水，不能再次导入期初。
+  {% if opening_date %}本账簿期初日为 <strong>{{ opening_date }}</strong>。{% endif %}
+</div>
+<p><a href="{{ url_for('index') }}">返回首页</a></p>
+{% else %}
+
+<p>将期初日与三份 CSV 一起入账，<strong>有错整批拒收</strong>。期初流水统一记在
+  期初日 00:00:00 UTC，因此自期初日零点起即可引用原单号办理核销、冲正或撤销。</p>
+
+<form method="post" enctype="multipart/form-data">
+  <p>
+    <label>期初日（UTC）：
+      <input type="date" name="opening_date" value="{{ opening_date or '' }}" required>
+    </label>
+  </p>
+
+  <fieldset>
+    <legend>期初发票 CSV</legend>
+    <input type="file" name="invoices_file" accept=".csv" required>
+    <pre>invoice_id,invoice_date,due_date,amount_cents,outstanding_cents
+INV-001,2026-01-05,2026-02-04,100000,40000</pre>
+    <ul>
+      <li>列：单号、开票日、到期日、原金额、未核销额（中文表头亦可）。</li>
+      <li>金额为整数分；<strong>仅未核销额可为 0</strong>，原金额须为正。</li>
+      <li>开票日不得晚于期初日。</li>
+    </ul>
+  </fieldset>
+
+  <fieldset>
+    <legend>期初收款 CSV（可用额）</legend>
+    <input type="file" name="receipts_file" accept=".csv" required>
+    <pre>receipt_id,amount_cents
+R-001,60000</pre>
+    <ul>
+      <li>列：编号、可用额（中文表头亦可）；可用额可为 0。</li>
+      <li>只带入<strong>还有可用额，或仍有可撤核销</strong>的收款；两者皆无的行请勿带入。</li>
+    </ul>
+  </fieldset>
+
+  <fieldset>
+    <legend>期初核销 CSV（仍可撤销部分）</legend>
+    <input type="file" name="allocations_file" accept=".csv" required>
+    <pre>allocation_id,receipt_id,invoice_id,revocable_cents
+A-001,R-001,INV-001,60000</pre>
+    <ul>
+      <li>列：编号、收款编号、发票单号、可撤额（中文表头亦可）；可撤额须为正整数分。</li>
+      <li>核销两端（收款、发票）必须在本批期初数据中。</li>
+      <li>每张发票：未核销额 + 关联核销可撤额之和 ≤ 原金额。</li>
+    </ul>
+  </fieldset>
+
+  <p><button type="submit">期初入账</button></p>
+</form>
+{% endif %}
+{% endblock %}

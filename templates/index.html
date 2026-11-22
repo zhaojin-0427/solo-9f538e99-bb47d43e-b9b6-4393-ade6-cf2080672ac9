@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>应收账龄系统</h1>
+{% if opening_date %}
+<p>账簿期初日：<strong>{{ opening_date }}</strong>（UTC 零点起可引用期初原单号）。</p>
+{% endif %}
 <p>当前账簿（截至 {{ today }}）：</p>
 <table>
   <tr><th>发票</th><th>收款</th><th>核销</th><th>撤销核销</th><th>银行冲正</th></tr>
@@ -13,8 +16,14 @@
   </tr>
 </table>
 <ul>
+  {% if is_empty %}
+  <li><a href="{{ url_for('opening') }}">期初导入</a>（空账一次性：期初日 + 发票 / 收款 / 可撤核销三份 CSV）</li>
+  {% endif %}
   <li><a href="{{ url_for('upload_invoices') }}">上传发票 CSV</a>（单号、开票日、到期日、金额）</li>
   <li><a href="{{ url_for('upload_transactions') }}">分批上传流水 CSV</a>（收款 / 核销 / 撤销核销 / 银行冲正）</li>
+  {% if opening_date %}
+  <li><a href="{{ url_for('opening_allocations') }}">期初核销明细</a>（查看 / 选择仍可撤销的期初核销）</li>
+  {% endif %}
   <li><a href="{{ url_for('aging') }}">按截止日查询账龄</a></li>
 </ul>
 {% endblock %}

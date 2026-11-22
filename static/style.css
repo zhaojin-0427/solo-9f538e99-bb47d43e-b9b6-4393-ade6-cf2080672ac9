@@ -16,3 +16,8 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .inline-form { margin: 14px 0; }
 pre { background: #f0f2f5; padding: 10px; border-radius: 6px; overflow-x: auto; }
 button { padding: 6px 16px; cursor: pointer; }
+fieldset { border: 1px solid #dde3ea; border-radius: 6px; margin: 16px 0;
+           padding: 10px 16px; }
+legend { font-weight: 600; color: #1f3a5f; }
+.tag { display: inline-block; font-size: 12px; padding: 1px 6px;
+       border-radius: 4px; background: #e8eef7; color: #1f3a5f; }

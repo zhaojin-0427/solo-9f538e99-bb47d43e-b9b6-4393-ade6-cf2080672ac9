@@ -4,10 +4,14 @@
 <h1>应收账龄</h1>
 <form method="get" class="inline-form">
   <label>截止日（UTC，含当天结束）：
-    <input type="date" name="cutoff" value="{{ report.cutoff }}">
+    <input type="date" name="cutoff" value="{{ report.cutoff }}"
+           {% if opening_date %}min="{{ opening_date }}"{% endif %}>
   </label>
   <button type="submit">查询</button>
 </form>
+{% if opening_date %}
+<p>账簿期初日为 <strong>{{ opening_date }}</strong>，截止日不得早于期初日。</p>
+{% endif %}
 
 <h2>账龄汇总</h2>
 <table>

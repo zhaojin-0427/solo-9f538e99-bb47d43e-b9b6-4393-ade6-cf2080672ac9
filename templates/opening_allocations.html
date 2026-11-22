@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}期初核销明细{% endblock %}
+{% block content %}
+<h1>期初核销明细</h1>
+{% if opening_date %}<p>期初日：<strong>{{ opening_date }}</strong>（UTC 零点生效）。</p>{% endif %}
+
+{% if allocations %}
+<table>
+  <tr>
+    <th>核销编号</th><th>收款编号</th><th>发票单号</th>
+    <th>可撤额</th><th>已撤销</th><th>仍可撤销</th>
+  </tr>
+  {% for a in allocations %}
+  <tr>
+    <td>{{ a.id }}</td>
+    <td>{{ a.receipt_id }}</td>
+    <td>{{ a.invoice_id }}</td>
+    <td class="num">{{ "%.2f"|format(a.amount_cents / 100) }}</td>
+    <td class="num">{{ "%.2f"|format(a.unallocated_cents / 100) }}</td>
+    <td class="num">{{ "%.2f"|format(a.revocable_cents / 100) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+<p>撤销期初核销请在<a href="{{ url_for('upload_transactions') }}">上传流水</a>中登记
+  「撤销核销」，生效日不得早于期初日、金额不得超过仍可撤销额；
+  撤销后账龄与收款可用额会相应恢复。</p>
+{% else %}
+<p>暂无期初核销。</p>
+{% endif %}
+
+<h2>发票当前余额</h2>
+{% if invoices %}
+<table>
+  <tr><th>单号</th><th>开票日</th><th>到期日</th><th>原金额</th><th>未核销余额</th></tr>
+  {% for inv in invoices %}
+  <tr>
+    <td>{{ inv.id }}{% if inv.is_opening %} <span class="tag">期初</span>{% endif %}</td>
+    <td>{{ inv.invoice_date }}</td>
+    <td>{{ inv.due_date }}</td>
+    <td class="num">{{ "%.2f"|format(inv.amount_cents / 100) }}</td>
+    <td class="num">{{ "%.2f"|format(inv.outstanding_cents / 100) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>暂无发票。</p>
+{% endif %}
+{% endblock %}
